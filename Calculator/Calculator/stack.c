@@ -2,26 +2,26 @@
 #include <stdio.h>
 #include "header.h"
 
-int push(int stack[], int point, int digit)
+int push(double stack[], int point, double digit)
 {
     if (point < size)
         stack[point++] = digit;
     return point;
 }
 
-int pop(int stack[], int point)
+int pop(double stack[], int point)
 {
     if (point)
         --point;
     return point;
 }
 
-int is_empty(int stack[], int point)
+int is_empty(double stack[], int point)
 {
     return !point;
 }
 
-int top(int stack[], int point)
+double top(double stack[], int point)
 {
     if (!is_empty(stack, point))
         return stack[point - 1];

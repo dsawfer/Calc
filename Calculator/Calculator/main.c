@@ -9,7 +9,12 @@ int main()
 {
 	char** data;
 	data = readFile();
-	distributor(data);
+
+	char expression[size] = { 0 };          //главное выражение
+	strcpy(expression, data[0]);
+
+	double res = distributor(expression, data);
+	printf("%0.10lf", res);
 
 	for (int i = 0; i < length; i++)
 		free(data[i]);

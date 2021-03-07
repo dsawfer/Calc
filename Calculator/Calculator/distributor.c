@@ -1,7 +1,47 @@
-#define _CRT_SECURE_NO_WARNINGS
+п»ї#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "header.h"
+
+int is_digit(char* numb)
+{
+    int step = 0;
+    while (numb[step])
+        if (numb[step] < '0' || numb[step] > '9')
+            return 0;
+        else step++;
+    return 1;
+}
+
+makeExpression(char* expression, char** data, int row, int col)
+{
+    int step = 0;
+    while (data[row][col]) {
+        expression[step++] = data[row][col++];
+    }
+}
+
+double findSolution(char* numb, char** data)    //РїРµСЂРµРґРµР»Р°С‚СЊ
+{
+    int row = 1, col = 0;
+    while (data[row][col] && data[row][col] != ' ') {
+        if (numb[col] != data[row][col]) {
+            row++;
+            col = 0;
+            continue;
+        }
+        else
+        {
+            col++;
+            continue;
+        }
+    }
+    char expression[size] = { 0 };
+    makeExpression(expression, data, row, col + 3);
+    double digit = distributor(expression, data);
+    return digit;
+}
 
 int is_operator(char symb)
 {
@@ -15,6 +55,14 @@ int is_operator(char symb)
         return 3;
     case '/':
         return 4;
+    case '(':
+        return 5;
+    case ')':
+        return 6;
+    case '^':
+        return 7;
+    case '|':
+        return 8;
     }
     return 0;
 }
@@ -24,18 +72,26 @@ int prio(char symb)
     switch (symb)
     {
     case '+':
-        return 2;
+        return 4;
     case '-':
-        return 2;
+        return 4;
     case '*':
-        return 1;
+        return 3;
     case '/':
+        return 3;
+    case '(':
         return 1;
+    case ')':
+        return 5;
+    case '^':
+        return 2;
+    case '|':
+        return 2;
     }
     return 10;
 }
 
-int calculate(int a, int b, char operator)
+double calculate(double a, double b, char operator)
 {
     switch (operator)
     {
@@ -47,6 +103,10 @@ int calculate(int a, int b, char operator)
         return (a * b);
     case '/':
         return (a / b);
+    case '^':
+        return (pow(a, b));
+    case '|':
+        return (sqrt(a));
     default:
         return 0;
     }
@@ -61,67 +121,96 @@ addSymb(char* numb, char symb)
     numb[step - 1] = symb;
 }
 
-int parse(char* numb)
+double parse(char* numb)
 {
-    int digit = 0;
+    double digit = 0;
     if (numb[0] == '!') numb[0] = '-';
-    sscanf(numb, "%d", &digit);
+    sscanf(numb, "%lf", &digit);
     return digit;
 }
 
-distributor(char** data)
+double distributor(char* expression, char** data)
 {
-    int stack[size] = { 0 };                //массив выхода
-    int op_stack[size] = { 0 };
+    double stack[size] = { 0 };
+    double op_stack[size] = { 0 };          //СЃС‚РµРє РѕРїРµСЂР°С‚РѕСЂРѕРІ
     int point = 0, op_point = 0;
     int step = 0;
-
-    char expression[size] = { 0 };          //главное выражение
-    strcpy(expression, data[0]);
 
     char numb[size] = { 0 };
 
     while (expression[step]) {
         char symb = expression[step];
-        if (!is_operator(symb)) {           //если не оператор, то продолжить
+        if (!is_operator(symb)) {           //РµСЃР»Рё РЅРµ РѕРїРµСЂР°С‚РѕСЂ, С‚Рѕ РїСЂРѕРґРѕР»Р¶РёС‚СЊ
             addSymb(numb, symb);
             step++;
             continue;
         }
-        int digit = parse(numb);
-        point = push(stack, point, digit);
 
-        while(prio(symb) >= prio(top(op_stack, op_point))) {
-            int operator = top(op_stack, op_point);                     //выталкивает оператор из стека операторов
+        if (numb[0] && is_digit(numb)) {
+            double digit = parse(numb);
+            point = push(stack, point, digit);
+        }
+        else {
+            if (numb[0]) {
+                double digit = findSolution(numb, data);
+                point = push(stack, point, digit);
+            }
+        }
+       
+        while(prio(symb) >= prio(top(op_stack, op_point)) && top(op_stack, op_point) != '(') {
+            int operator = top(op_stack, op_point);                     //РІС‹С‚Р°Р»РєРёРІР°РµС‚ РѕРїРµСЂР°С‚РѕСЂ РёР· СЃС‚РµРєР° РѕРїРµСЂР°С‚РѕСЂРѕРІ
             op_point = pop(op_stack, op_point);                         //
 
-            int b = top(stack, point);
-            point = pop(stack, point);
-            int a = top(stack, point);
-            point = pop(stack, point);
+            if (operator == '|') {
+                double a = top(stack, point);
+                point = pop(stack, point);
 
-            point = push(stack, point, calculate(a, b, operator));
+                point = push(stack, point, calculate(a, 0, operator));
+            }
+            else {
+                double b = top(stack, point);
+                point = pop(stack, point);
+                double a = top(stack, point);
+                point = pop(stack, point);
+
+                point = push(stack, point, calculate(a, b, operator));
+            }
         }
-        op_point = push(op_stack, op_point, symb);
 
-        memset(numb, '\0', size);                                       //обнуляет numb
+        if (symb == ')' && top(op_stack, op_point) == '(') {
+            op_point = pop(op_stack, op_point);
+        }
+        else op_point = push(op_stack, op_point, symb);
+        
+
+        memset(numb, '\0', size);                                       //РѕР±РЅСѓР»СЏРµС‚ numb
         step++;
     }
-    if (numb) {
-        int digit = parse(numb);
+
+    if (numb[0]) {
+        double digit = parse(numb);
         point = push(stack, point, digit);
     }
+
     while (!is_empty(op_stack, op_point))
     {
         int operator = top(op_stack, op_point);
         op_point = pop(op_stack, op_point);
 
-        int b = top(stack, point);
-        point = pop(stack, point);
-        int a = top(stack, point);
-        point = pop(stack, point);
+        if (operator == '|') {
+            double a = top(stack, point);
+            point = pop(stack, point);
 
-        point = push(stack, point, calculate(a, b, operator));
+            point = push(stack, point, calculate(a, 0, operator));
+        }
+        else {
+            double b = top(stack, point);
+            point = pop(stack, point);
+            double a = top(stack, point);
+            point = pop(stack, point);
+
+            point = push(stack, point, calculate(a, b, operator));
+        }
     }
-    printf("%d", top(stack, point));
+    return top(stack, point);
 }

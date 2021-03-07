@@ -3,11 +3,9 @@
 #define size 100
 #define length 10		//количество строк в input
 
-distributor();			//
-calculate();			//
+int push(double stack[], int point, double digit);
+int pop(double stack[], int point);
+int is_empty(double stack[], int point);
+double top(double stack[], int point);
 
-int push(int stack[], int point, int digit);
-int pop(int stack[], int point);
-int is_empty(int stack[], int point);
-int top(int stack[], int point);
-
+double distributor(char* expression, char** data);
