@@ -24,6 +24,9 @@
     <ClCompile Include="stack.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="functions.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header.h">

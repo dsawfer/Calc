@@ -8,10 +8,58 @@ int is_digit(char* numb)
 {
     int step = 0;
     while (numb[step])
-        if (numb[step] < '0' || numb[step] > '9')
+        if (numb[step] < '0' || numb[step] > '9') {
+            if (numb[step] == '.' || numb[step] == '!') {
+                step++;
+                continue;
+            }
             return 0;
+        }
         else step++;
     return 1;
+}
+
+double findConst(char* numb)
+{
+    if (!strcmp(numb, "PI")) return 3.1415926535;
+    if (!strcmp(numb, "e")) return 2.7182818284;
+    //if (!strcmp(numb, "j")) return ;
+    return 0;
+}
+
+double findFunc(char* numb, char* expression, int step, char** data)
+{
+    int func = 0;
+    double digit = 0;
+
+    if (!strcmp(numb, "sin"))
+        func = 1;
+    if (!strcmp(numb, "cos"))
+        func = 2;
+    if (!strcmp(numb, "tg"))
+        func = 3;
+    if (!strcmp(numb, "ctg"))
+        func = 4;
+    if (!strcmp(numb, "log"))
+        func = 5;
+    if (!strcmp(numb, "ln"))
+        func = 6;
+    if (!strcmp(numb, "abs"))
+        func = 7;
+    if (!strcmp(numb, "imag"))
+        func = 8;
+    if (!strcmp(numb, "mag"))
+        func = 9;
+    if (!strcmp(numb, "real"))
+        func = 10;
+    if (!strcmp(numb, "phase"))
+        func = 11;
+
+
+    if (func) {
+        return digit = calcFunction(expression, step, func, data);
+    }
+    else return 0;
 }
 
 makeExpression(char* expression, char** data, int row, int col)
@@ -22,7 +70,7 @@ makeExpression(char* expression, char** data, int row, int col)
     }
 }
 
-double findSolution(char* numb, char** data)    //переделать
+double findVar(char* numb, char** data)
 {
     int row = 1, col = 0;
     while (data[row][col] && data[row][col] != ' ') {
@@ -43,74 +91,6 @@ double findSolution(char* numb, char** data)    //переделать
     return digit;
 }
 
-int is_operator(char symb)
-{
-    switch (symb)
-    {
-    case '+':
-        return 1;
-    case '-':
-        return 2;
-    case '*':
-        return 3;
-    case '/':
-        return 4;
-    case '(':
-        return 5;
-    case ')':
-        return 6;
-    case '^':
-        return 7;
-    case '|':
-        return 8;
-    }
-    return 0;
-}
-
-int prio(char symb)
-{
-    switch (symb)
-    {
-    case '+':
-        return 4;
-    case '-':
-        return 4;
-    case '*':
-        return 3;
-    case '/':
-        return 3;
-    case '(':
-        return 1;
-    case ')':
-        return 5;
-    case '^':
-        return 2;
-    case '|':
-        return 2;
-    }
-    return 10;
-}
-
-double calculate(double a, double b, char operator)
-{
-    switch (operator)
-    {
-    case '+':
-        return (a + b);
-    case '-':
-        return (a - b);
-    case '*':
-        return (a * b);
-    case '/':
-        return (a / b);
-    case '^':
-        return (pow(a, b));
-    case '|':
-        return (sqrt(a));
-    default:
-        return 0;
-    }
-}
 
 addSymb(char* numb, char symb)
 {
@@ -127,6 +107,17 @@ double parse(char* numb)
     if (numb[0] == '!') numb[0] = '-';
     sscanf(numb, "%lf", &digit);
     return digit;
+}
+
+int findNextStep(char* expression, int step)
+{
+    int point = step + 1, hooks = 1;
+    while (hooks) {
+        if (expression[point] == ')') hooks--;
+        if (expression[point] == '(') hooks++;
+        point++;
+    }
+    return point;
 }
 
 double distributor(char* expression, char** data)
@@ -146,15 +137,26 @@ double distributor(char* expression, char** data)
             continue;
         }
 
-        if (numb[0] && is_digit(numb)) {
-            double digit = parse(numb);
-            point = push(stack, point, digit);
-        }
-        else {
-            if (numb[0]) {
-                double digit = findSolution(numb, data);
-                point = push(stack, point, digit);
+        if (numb[0]) {
+            double digit = 0;
+
+            if (is_digit(numb)) digit = parse(numb);
+            else {
+                digit = findConst(numb);
+                if (digit == 0) {
+                    digit = findFunc(numb, expression, step, data);
+                    if (digit) {
+                        step = findNextStep(expression, step);
+                        point = push(stack, point, digit);
+                        memset(numb, '\0', size);
+                        continue;
+                    }
+                    else {
+                        digit = findVar(numb, data);
+                    }
+                }
             }
+            point = push(stack, point, digit);
         }
        
         while(prio(symb) >= prio(top(op_stack, op_point)) && top(op_stack, op_point) != '(') {
@@ -187,8 +189,21 @@ double distributor(char* expression, char** data)
         step++;
     }
 
-    if (numb[0]) {
+    /*if (numb[0]) {
         double digit = parse(numb);
+        point = push(stack, point, digit);
+    }*/
+
+    if (numb[0]) {
+        double digit = 0;
+
+        if (is_digit(numb)) digit = parse(numb);
+        else {
+            digit = findConst(numb);
+            if (digit == 0) {
+                digit = findVar(numb, data);
+            }
+        }
         point = push(stack, point, digit);
     }
 
